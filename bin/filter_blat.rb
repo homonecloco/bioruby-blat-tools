@@ -34,7 +34,7 @@ stream = IO.open(options[:blat_file]) unless  options[:blat_file] == "-"
 
 Bio::Blat::StreamedReport.each_hit(stream) do |hit|
   #puts hit.inspect
-  if hit.percentage_covered >= options[:covered] and hit.percent_identity >= options[:identity]
+  if hit.query_percentage_covered >= options[:covered] and hit.percent_identity >= options[:identity]
     puts hit.data.join("\t")
   end
 end
