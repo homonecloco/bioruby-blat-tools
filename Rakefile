@@ -17,8 +17,9 @@ Jeweler::Tasks.new do |gem|
   gem.name = "bio-blat-tools"
   gem.homepage = "http://github.com/homonecloco/bioruby-blat-tools"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{Tools to manipulate blat files from the command line.}
+  gem.description = %Q{Tools to manipulate blat files from the command line. Uses the Bio::Blat object from BioRuby, but the parser has been modified to avoid reading the whole psl file, it yields just the current entry and it is up to the consumer to decide to store it or not."
+  s.email = "ricardo.ramirez-gonzalez@tgac.ac.uk"}
   gem.email = "ricardo.ramirez-gonzalez@tgac.ac.uk"
   gem.authors = ["homonecloco"]
   # dependencies defined in Gemfile

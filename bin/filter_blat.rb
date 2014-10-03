@@ -1,4 +1,6 @@
+#!/usr/bin/env ruby
 require 'optparse'
+require 'bio'
 $: << File.expand_path(File.dirname(__FILE__) + '/../lib')
 $: << File.expand_path('.')
 path= File.expand_path(File.dirname(__FILE__) + '/../lib/bio-blat-tools.rb')
@@ -14,7 +16,7 @@ OptionParser.new do |opts|
   opts.banner = "Usage: filter_blat.rb [options]"
 
   opts.on("-p", "--psl FILE", "PSL file") do |o|
-    options[:blat_file] = o.upcase
+    options[:blat_file] = o
   end
   opts.on("-i", "--identity FLOAT", "Minimum percentage identity") do |o|
     options[:identity] = o.to_f
