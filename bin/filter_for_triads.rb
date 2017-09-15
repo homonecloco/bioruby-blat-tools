@@ -8,7 +8,7 @@ path= File.expand_path(File.dirname(__FILE__) + '/../lib/bio-blat-tools.rb')
 require path
 
 options = {}
-options[:identity] = 95
+options[:identity] = 50
 options[:min_bases] = 200
 options[:blat_file] = "-"
 
@@ -53,7 +53,10 @@ Bio::Blat::StreamedReport.each_hit(stream) do |hit|
   if hit.covered >= options[:min_bases] and hit.percent_identity >= options[:identity]
     query  = hit.query_id.split("-")[0]
     target = hit.target_id.split("-")[0]
-    puts hit.data.join("\t") if valid_pairs_A_B[query] == target or valid_pairs_A_D[query] == target or valid_pairs_B_D[query] == target  
+    puts hit.data.join("\t") if (
+      valid_pairs_A_B[query] == target or 
+      valid_pairs_A_D[query] == target or 
+      valid_pairs_B_D[query] == target  )
   end
 end
 
