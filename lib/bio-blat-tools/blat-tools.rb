@@ -1,4 +1,5 @@
 require 'bio'
+require 'levenshtein'
 
 module Bio
   class Blat
@@ -40,6 +41,7 @@ module Bio
 end
 
 class Bio::Blat::Report::Hit::BlockArray
+  attr_accessor :query, :hit
   def initialize()
     @arr = Array.new 
   end
@@ -74,12 +76,74 @@ class Bio::Blat::Report::Hit::BlockArray
   def hit_from
     @arr.first.hit_from
   end
+
   def hit_to
     @arr.last.hit_to
   end
 
+  def query_length
+    query_to - query_from + 1
+  end
+
+  def hit_length
+    hit_to - hit_from + 1
+  end
+
+  def query_gap_count
+
+    last = false
+    count = 0
+    @arr.each do |hsp|
+      if last
+        gap_query  =  hsp.query_from - last.query_to - 1 
+        count += 1 if gap_query > 0
+      end
+      last = hsp 
+    end
+    count
+  end
+
+  def query_seq(sequence)
+    seq = ""
+    @arr.each_with_index do |e, i| 
+      seq << sequence[e.query_from - 1 , e.blocksize]
+    end
+    seq
+  end
+
+  def hit_seq(sequence)
+    seq = ""
+    @arr.each_with_index do |e, i| 
+      seq << sequence[e.hit_from - 1 , e.blocksize]
+    end
+    seq
+  end
+
+  def mismatch
+    Levenshtein.distance query_seq(query),  hit_seq(hit)
+    
+  end
+
   def to_s
-    "q:#{query_from}-#{query_to}\th:#{hit_from}-#{hit_to} (#{length})"
+    "q:#{query_from}-#{query_to} (#{query_length})\th:#{hit_from}-#{hit_to} (#{hit_length}) \t #{length}"
+  end
+
+  def milli_bad
+    qalen = query_length
+    talen = hit_length
+    alen =  qalen < talen ? qalen : talen
+    return 0 if alen <= 0
+
+    d = qalen - talen
+    d = 0 if d < 0
+    total = length
+    return 0 if total == 0
+    return (1000 * (self.mismatch + self.query_gap_count +
+                      (3 * Math.log(1 + d)).round) / total)
+  end
+
+  def percent_identity
+    100.0 - self.milli_bad * 0.1
   end
 
 end
@@ -114,12 +178,11 @@ class Bio::Blat::Report::Hit
       gap_hit    =  hsp.hit_from   - current_block_array.hit_to   - 1   
       gap_query  =  hsp.query_from - current_block_array.query_to - 1
       if gap_hit > min_gap or gap_query > min_gap
-        puts current_block_array.to_s
         current_block_array = BlockArray.new
       end 
       current_block_array << hsp
     end
-    puts "#{current_block_array}"
+
     longest_block_array = current_block_array if current_block_array.length > longest_block_array.length
     longest_block_array
   end

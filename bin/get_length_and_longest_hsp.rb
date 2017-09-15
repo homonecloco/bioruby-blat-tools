@@ -24,6 +24,10 @@ OptionParser.new do |opts|
   opts.on("-g", "--max_gap_size INT", "Maximum gap size to consider different blocks part of the same HSP") do |o|
     options[:max_gap_size] = o.to_i
   end
+
+  opts.on("-f", "--sequences FILE" , "FASTA file containing all the possible sequences. ") do |o|
+    options[:fasta] = o
+  end
   
 end.parse!
 
@@ -33,10 +37,33 @@ stream = ARGF
 stream = IO.open(options[:blat_file]) unless  options[:blat_file] == "-"
 max_gap_size = options[:max_gap_size]
 
-Bio::Blat::StreamedReport.each_hit(stream) do |hit|
-  puts hit.data.join("\t")
-  longest = hit.longest_hsp_length(min_gap = max_gap_size)
-  puts [hit.query_id, hit.target_id, hit.length, hit.percent_identity, longest.length ].join("\t")
+sequences = Hash.new
+Bio::FlatFile.open(Bio::FastaFormat, options[:fasta]) do |fasta_file|
+  fasta_file.each do |entry|
+    sequences[entry.entry_id] = entry.naseq
+  end
 end
 
+$stderr.puts "#Loaded #{sequences.length} squences"
+
+total = 0 
+skipped = 0
+puts ["query", "target", "hit_length", "hit_pident", "longest_hsp_length", "longest_hsp_pident"].join("\t")
+Bio::Blat::StreamedReport.each_hit(stream) do |hit|
+  if hit.strand == '-'
+    skipped += 1
+    next
+  end
+  #puts hit.data.join("\t")
+  longest = hit.longest_hsp_length(min_gap = max_gap_size)
+
+  longest.query = sequences[hit.query_id]
+  longest.hit   = sequences[hit.target_id]
+  #puts longest
+  #puts longest.mismatch
+  #puts longest.query_gap_count
+  puts [hit.query_id, hit.target_id, hit.length, hit.percent_identity, longest.length, longest.percent_identity ].join("\t")
+end
+
+$stderr.puts ("#{total} lines, #{skipped} skipped")
 stream.close unless  options[:blat_file] == "-"
